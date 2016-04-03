@@ -46,8 +46,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                showSensorValues();
             }
         });
 
@@ -106,6 +105,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         startActivity(intent);
     }
 
+    public void showSensorValues(){
+        startActivity(new Intent(this, DisplaySensorValuesActivity.class));
+    }
+
     @Override
     public void onSensorChanged(SensorEvent event) {
 
@@ -132,12 +135,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // Start the animation
         image.startAnimation(ra);
         currentDegree = -degree;
-
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         // not in use
     }
-
 }

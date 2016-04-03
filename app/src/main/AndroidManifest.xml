@@ -27,6 +27,15 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="lthstudents.mamn01app.MainActivity" />
         </activity>
+        <activity
+            android:name=".DisplaySensorValuesActivity"
+            android:label="@string/title_activity_display_message"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="lthstudents.mamn01app.MainActivity" />
+        </activity>
     </application>
 
 </manifest>
