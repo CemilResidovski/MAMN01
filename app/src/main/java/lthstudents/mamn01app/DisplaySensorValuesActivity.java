@@ -10,7 +10,7 @@ import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-public class DisplayMessageActivity extends AppCompatActivity {
+public class DisplaySensorValuesActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
