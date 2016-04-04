@@ -57,9 +57,6 @@ public class DisplaySensorValuesActivity extends AppCompatActivity implements Se
     @Override
     protected void onResume() {
         super.onResume();
-        // for the system's orientation sensor registered listeners
-//        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
-//                SensorManager.SENSOR_DELAY_GAME);
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
@@ -73,15 +70,21 @@ public class DisplaySensorValuesActivity extends AppCompatActivity implements Se
     @Override
     public void onSensorChanged(SensorEvent event) {
         textView.setText("");
+        float[] linear_acceleration = new float[3];
 
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             gravSensorVals = lowPass(event.values.clone(), gravSensorVals);
-        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            magSensorVals = lowPass(event.values.clone(), magSensorVals);
         }
+// else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+//            magSensorVals = lowPass(event.values.clone(), magSensorVals);
+//        }
 
-        String message = "x: " + Float.toString(gravSensorVals[0]) + "\ny: "
-                + Float.toString(gravSensorVals[1]) + "\nz: " + Float.toString(gravSensorVals[2]);
+        linear_acceleration[0] = event.values[0] - gravSensorVals[0];
+        linear_acceleration[1] = event.values[1] - gravSensorVals[1];
+        linear_acceleration[2] = event.values[2] - gravSensorVals[2];
+
+        String message = "x: " + Float.toString(linear_acceleration[0]) + "\ny: "
+                + Float.toString(linear_acceleration[1]) + "\nz: " + Float.toString(linear_acceleration[2]);
 
         textView.setTextSize(40);
 
@@ -91,7 +94,7 @@ public class DisplaySensorValuesActivity extends AppCompatActivity implements Se
     protected float[] lowPass( float[] input, float[] output ) {
         if ( output == null ) return input;
         for ( int i=0; i<input.length; i++ ) {
-            output[i] = output[i] + ALPHA * (input[i] - output[i]);
+            output[i] = ALPHA * output[i] + (1 - ALPHA) * input[i];
         }
         return output;
     }
