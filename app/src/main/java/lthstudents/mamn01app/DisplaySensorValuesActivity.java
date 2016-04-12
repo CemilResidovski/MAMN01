@@ -1,6 +1,6 @@
 package lthstudents.mamn01app;
 
-import android.content.Intent;
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -14,22 +14,21 @@ import android.widget.TextView;
 public class DisplaySensorValuesActivity extends AppCompatActivity implements SensorEventListener {
 
     // device sensor manager
-    private SensorManager mSensorManager;
-
+    private SensorManager mSensorMng;
     private Sensor mAccelerometer;
+    private static final int FORCE_THRESHOLD = 350;
+    private static final int TIME_THRESHOLD = 100;
+    private static final int SHAKE_TIMEOUT = 500;
+    private static final int SHAKE_DURATION = 1000;
+    private static final int SHAKE_COUNT = 3;
 
+    private SensorManager mSensorMgr;
+    private float[] mLast;
+    private long mLastTime;
+    private int mShakeCount = 0;
+    private long mLastShake;
+    private long mLastForce;
     public TextView tvHeading;
-
-    private float RTmp[] = new float[9];
-    private float Rot[] = new float[9];
-    private float I[] = new float[9];
-    private float grav[] = new float[3];
-    private float mag[] = new float[3];
-    private float results[] = new float[3];
-
-    static final float ALPHA = 0.8f;
-    protected float[] gravSensorVals;
-    protected float[] magSensorVals;
 
     private RelativeLayout layout;
     private TextView textView;
@@ -44,59 +43,74 @@ public class DisplaySensorValuesActivity extends AppCompatActivity implements Se
         textView = new TextView(this);
         layout.addView(textView);
 
+        mLast = new float[3];
+
+        mShakeCount = 0;
+
+        mLast[0] = -1f;
+        mLast[1] = -1f;
+        mLast[2] = -1f;
+
         // TextView that will tell the user what degree is he heading
         tvHeading = (TextView) findViewById(R.id.tvHeading);
 
         // initialize your android device sensor capabilities
-        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        mSensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         // initialize the accelerometer
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mAccelerometer = mSensorMgr.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+    }
+
+    protected void onShake() {
+        textView.setText("");
+        String message = "Shake Count: " + mShakeCount;
+        textView.setTextSize(40);
+        textView.setText(message);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorMgr.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
-    @Override
+
     protected void onPause() {
         super.onPause();
         // to stop the listener and save battery
-        mSensorManager.unregisterListener(this);
+        mSensorMgr.unregisterListener(this);
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        textView.setText("");
-        float[] linear_acceleration = new float[3];
-
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            gravSensorVals = lowPass(event.values.clone(), gravSensorVals);
+            float[] values = event.values.clone();
+
+            long now = System.currentTimeMillis();
+
+            if ((now - mLastForce) > SHAKE_TIMEOUT) {
+                //mShakeCount = 0;
+                mShakeCount++;
+            }
+
+            if ((now - mLastTime) > TIME_THRESHOLD) {
+                long diff = now - mLastTime;
+                float speed = Math.abs(values[0] + values[1] +
+                        values[2] - mLast[0] - mLast[1] - mLast[2]) / diff * 10000;
+
+                if (speed > FORCE_THRESHOLD) {
+                    if ((++mShakeCount >= SHAKE_COUNT) && (now - mLastShake > SHAKE_DURATION)) {
+                        mLastShake = now;
+                        //mShakeCount = 0;
+                        mShakeCount++;
+                        onShake();
+                    }
+                    mLastForce = now;
+                }
+                mLastTime = now;
+                mLast = values;
+            }
         }
-// else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-//            magSensorVals = lowPass(event.values.clone(), magSensorVals);
-//        }
-
-        linear_acceleration[0] = event.values[0] - gravSensorVals[0];
-        linear_acceleration[1] = event.values[1] - gravSensorVals[1];
-        linear_acceleration[2] = event.values[2] - gravSensorVals[2];
-
-        String message = "x: " + Float.toString(linear_acceleration[0]) + "\ny: "
-                + Float.toString(linear_acceleration[1]) + "\nz: " + Float.toString(linear_acceleration[2]);
-
-        textView.setTextSize(40);
-
-        textView.setText(message);
-    }
-
-    protected float[] lowPass( float[] input, float[] output ) {
-        if ( output == null ) return input;
-        for ( int i=0; i<input.length; i++ ) {
-            output[i] = ALPHA * output[i] + (1 - ALPHA) * input[i];
-        }
-        return output;
     }
 
     @Override
